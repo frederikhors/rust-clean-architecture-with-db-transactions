@@ -2,7 +2,7 @@ use self::player::delete::PlayerDeleteLambdaArgs;
 use self::player::update::PlayerUpdateLambdaArgs;
 use self::{player::create::PlayerCreateLambdaArgs, team::create::TeamCreateLambdaArgs};
 use crate::entities::player::Player;
-use crate::entities::{team::Team};
+use crate::entities::team::Team;
 use crate::services::commands::{player::PlayerInput, team::TeamInput};
 use std::{future::Future, pin::Pin};
 

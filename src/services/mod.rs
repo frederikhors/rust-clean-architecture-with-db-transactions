@@ -17,6 +17,6 @@ pub struct Commands {
 pub struct Queries {
     pub player_by_id: Box<dyn queries::player::find::Executor>,
     pub player_all: Box<dyn queries::player::all::Executor>,
-    
+
     pub team_by_id: Box<dyn queries::team::find::Executor>,
 }
