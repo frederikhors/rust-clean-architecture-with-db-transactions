@@ -263,9 +263,9 @@ I found the post: https://kerkour.com/rust-web-application-clean-architecture wi
 
 I really like this code except for:
 
-1. the service layer knows about repository implementation details (and for this reason)
+1. the service layer knows about repository implementation details
 
-1. it is impossible to change at runtime (or just to mock during tests) the DB driver.
+1. (and for this reason) it is impossible to change at runtime (or just to mock during tests) the DB driver.
 
 I opened the issue: https://github.com/skerkour/bloom-legacy/issues/70 and I'm waiting for the author.
 
