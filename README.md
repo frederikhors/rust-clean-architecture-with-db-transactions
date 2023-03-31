@@ -144,7 +144,7 @@ As you can see I'm using a lambda function with a struct as argument because thi
 
 But as you can imagine the code is not linear and I have to go back & forth.
 
-I think I should have something (but I don't know what) on the service layer to start (and commit/rollback) a DB transaction from there: but - as properly established by the rules of Clean architecture - the service layer cannot know implementation details of the underlying levels (repositories).
+I think I should have something (but I don't know what) on the service layer to start (and commit/rollback) a DB transaction from there: but - as properly established by the rules of Clean architecture - the service layer cannot know the implementation details of the underlying levels (repositories).
 
 I would like to use in my services something like (pseudo code):
 
@@ -177,71 +177,72 @@ The (maybe) interesting code is here: https://github.com/dpc/sniper/blob/master/
    <details>
    <summary>Expand the code</summary>
 
-    - repository:
+```rust
+// in the repository
+pub struct PlayerCreate<'a> {
+    tx: sqlx::Transaction<'a, sqlx::Postgres>,
+    pub input: &'a PlayerInput,
+}
 
-    ```rust
-    pub struct PlayerCreate<'a> {
-        tx: sqlx::Transaction<'a, sqlx::Postgres>,
-        pub input: &'a PlayerInput,
+#[async_trait::async_trait]
+impl<'a> PlayerCreateTrait for PlayerCreate<'a> {
+async fn check_for_team_free_spaces(&mut self, team_id: &str) -> Result<bool, String> {
+let team = self::Repo::team_by_id_using_tx(&mut self.tx, team_id).await?;
+
+        Ok(team.missing_players > 0)
     }
 
-    #[async_trait::async_trait]
-    impl<'a> PlayerCreateTrait for PlayerCreate<'a> {
-        async fn check_for_team_free_spaces(&mut self, team_id: &str) -> Result<bool, String> {
-            let team = self::Repo::team_by_id_using_tx(&mut self.tx, team_id).await?;
+    async fn commit(mut self, _player: &Player) -> Result<Player, String> {
+        // update the player here
 
-            Ok(team.missing_players > 0)
-        }
-
-        async fn commit(mut self, _player: &Player) -> Result<Player, String> {
-            // update the player here
-
-            let saved_player = Player {
-                ..Default::default()
-            };
-
-            self.tx.commit().await.unwrap();
-
-            Ok(saved_player)
-        }
-    }
-
-    #[async_trait::async_trait]
-    impl commands::RepoPlayer for Repo {
-        type PlayerCreate<'a> = PlayerCreate<'a>;
-
-        async fn player_create_start<'a>(
-            &self,
-            input: &'a PlayerInput,
-        ) -> Result<PlayerCreate<'a>, String> {
-            let tx = self.pool.begin().await.unwrap();
-
-            Ok(PlayerCreate { tx, input })
-        }
-    }
-    ```
-
-    - service:
-
-    ```rust
-    async fn execute(&self, input: &PlayerInput) -> Result<Player, String> {
-        let mut state_machine = self.deps.commands_repo.player_create_start(input).await?;
-
-        if !(state_machine.check_for_team_free_spaces(&input.team_id)).await? {
-            return Err("no free space available for this team".to_string());
-        }
-
-        let obj = Player {
-            id: "new_id".to_string(),
-            name: input.name.to_owned(),
-            team_id: input.team_id.to_owned(),
+        let saved_player = Player {
+            ..Default::default()
         };
 
-        let res = state_machine.commit(&obj).await?;
+        self.tx.commit().await.unwrap();
 
-        Ok(res)
+        Ok(saved_player)
     }
-    ```
+
+}
+
+#[async_trait::async_trait]
+impl commands::RepoPlayer for Repo {
+type PlayerCreate<'a> = PlayerCreate<'a>;
+
+    async fn player_create_start<'a>(
+        &self,
+        input: &'a PlayerInput,
+    ) -> Result<PlayerCreate<'a>, String> {
+        let tx = self.pool.begin().await.unwrap();
+
+        Ok(PlayerCreate { tx, input })
+    }
+
+}
+
+// in the service
+
+async fn execute(&self, input: &PlayerInput) -> Result<Player, String> {
+let mut state_machine = self.deps.commands_repo.player_create_start(input).await?;
+
+    if !(state_machine.check_for_team_free_spaces(&input.team_id)).await? {
+        return Err("no free space available for this team".to_string());
+    }
+
+    let obj = Player {
+        id: "new_id".to_string(),
+        name: input.name.to_owned(),
+        team_id: input.team_id.to_owned(),
+    };
+
+    let res = state_machine.commit(&obj).await?;
+
+    Ok(res)
+
+}
+
+```
 
    </details>
 
