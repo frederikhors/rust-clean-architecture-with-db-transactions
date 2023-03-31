@@ -1,0 +1,16 @@
+[package]
+name = "transaction"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = { version = "0.1.68" }
+sqlx = { version = "0.6.3", default-features = false, features = [
+    "macros",
+    "postgres",
+    "runtime-tokio-native-tls",
+    "time",
+] }
+tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
