@@ -3,11 +3,11 @@ use crate::queries::player::PlayerAllInput;
 use crate::{services::queries::RepoTrait, Deps};
 use std::sync::Arc;
 
-struct ExecutorImpl<C> {
-    deps: Arc<Deps<C>>,
+struct ExecutorImpl {
+    deps: Arc<Deps>,
 }
 
-pub fn new_executor<C: RepoTrait + Send + Sync + 'static>(deps: Arc<Deps<C>>) -> Box<dyn Executor> {
+pub fn new_executor(deps: Arc<Deps>) -> Box<dyn Executor> {
     Box::new(ExecutorImpl { deps })
 }
 
@@ -17,7 +17,7 @@ pub trait Executor: Send + Sync {
 }
 
 #[async_trait::async_trait]
-impl<C: RepoTrait + Send + Sync> Executor for ExecutorImpl<C> {
+impl Executor for ExecutorImpl {
     async fn execute(&self, input: &PlayerAllInput) -> Result<Vec<Player>, String> {
         let all = self.deps.queries_repo.player_all(input).await?;
 

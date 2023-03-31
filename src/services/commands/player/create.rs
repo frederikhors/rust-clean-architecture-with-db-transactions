@@ -3,11 +3,11 @@ use crate::services::commands::{player::PlayerInput, RepoTrait};
 use crate::Deps;
 use std::sync::Arc;
 
-struct ExecutorImpl<C> {
-    deps: Arc<Deps<C>>,
+struct ExecutorImpl {
+    deps: Arc<Deps>,
 }
 
-pub fn new_executor<C: RepoTrait + Send + Sync + 'static>(deps: Arc<Deps<C>>) -> Box<dyn Executor> {
+pub fn new_executor(deps: Arc<Deps>) -> Box<dyn Executor> {
     Box::new(ExecutorImpl { deps })
 }
 
@@ -23,7 +23,7 @@ pub trait PlayerCreateTrait {
 }
 
 #[async_trait::async_trait]
-impl<C: RepoTrait + Send + Sync> Executor for ExecutorImpl<C> {
+impl Executor for ExecutorImpl {
     async fn execute(&self, input: &PlayerInput) -> Result<Player, String> {
         let mut state_machine = self.deps.commands_repo.player_create_start(input).await?;
 
