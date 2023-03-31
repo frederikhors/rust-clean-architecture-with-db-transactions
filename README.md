@@ -19,6 +19,10 @@ My intent is to have an app build in 4 layers:
 - `ports`:
   - _some call this layer "controllers or presenters"_, still not present and not important for now, I'm using `main.rs` for this
 
+## Reproduction
+
+https://codesandbox.io/p/github/frederikhors/rust-clean-architecture-with-db-transactions/main
+
 # The issues
 
 ## Number 1
