@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use crate::NewTrait;
+
 pub mod player;
 pub mod team;
 
@@ -12,3 +14,5 @@ impl Repo {
         Self { pool }
     }
 }
+
+impl NewTrait for Repo {}

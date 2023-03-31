@@ -6,7 +6,7 @@ pub mod team;
 
 pub trait RepoTrait: Send + Sync + RepoPlayer + RepoTeam {}
 
-impl<T: RepoPlayer + RepoTeam> RepoTrait for T {}
+impl<T: RepoPlayer + RepoTeam + ?Sized> RepoTrait for T {}
 
 #[async_trait::async_trait]
 pub trait RepoPlayer: Send + Sync {

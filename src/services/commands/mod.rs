@@ -2,7 +2,7 @@ use self::player::delete::PlayerDeleteLambdaArgs;
 use self::player::update::PlayerUpdateLambdaArgs;
 use self::{player::create::PlayerCreateLambdaArgs, team::create::TeamCreateLambdaArgs};
 use crate::entities::player::Player;
-use crate::entities::{team::Team};
+use crate::entities::team::Team;
 use crate::services::commands::{player::PlayerInput, team::TeamInput};
 use std::{future::Future, pin::Pin};
 
@@ -11,7 +11,7 @@ pub mod team;
 
 pub trait RepoTrait: Send + Sync + RepoPlayer + RepoTeam {}
 
-impl<T: RepoPlayer + RepoTeam> RepoTrait for T {}
+impl<T: RepoPlayer + RepoTeam + ?Sized> RepoTrait for T {}
 
 pub type Lambda<'a, ArgT, ResT> =
     dyn 'a + Fn(ArgT) -> Pin<Box<dyn Future<Output = Result<ResT, String>> + Send + 'a>> + Sync;
