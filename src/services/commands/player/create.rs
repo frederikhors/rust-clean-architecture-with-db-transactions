@@ -29,6 +29,7 @@ impl<C: RepoTrait + Send + Sync> Executor for ExecutorImpl<C> {
                     let obj = Player {
                         id: "new_id".to_string(),
                         name: input.name.to_owned(),
+                        team_id: input.team_id.to_owned(),
                     };
 
                     Ok(obj)

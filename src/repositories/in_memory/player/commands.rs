@@ -1,5 +1,5 @@
 use crate::{
-    entities::player::Player,
+    entities::{player::Player, team::Team},
     repositories::in_memory::Repo,
     services::commands::{
         self,
@@ -73,13 +73,22 @@ impl commands::RepoPlayer for Repo {
         // create a transaction here because I can use it for other repository methods calls
         // let mut tx = self.pool.begin().await?;
 
-        // fetch current player here with appropriate code for this repository
+        // fetch current player here with appropriate code for this repository (a fake one now)
         let actual = Player {
             ..Default::default()
         };
 
+        // fetch current team here with appropriate code for this repository (a fake one now)
+        let actual_team = Team {
+            ..Default::default()
+        };
+
         // wait for lambda result
-        let player = lambda(PlayerUpdateLambdaArgs { actual }).await?;
+        let player = lambda(PlayerUpdateLambdaArgs {
+            actual,
+            actual_team,
+        })
+        .await?;
 
         // update player here with appropriate code for this repository
 

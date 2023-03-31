@@ -1,5 +1,5 @@
 use crate::{
-    entities::player::Player,
+    entities::{player::Player, team::Team},
     repositories::postgres::Repo,
     services::commands::{
         self,
@@ -76,8 +76,17 @@ impl commands::RepoPlayer for Repo {
             ..Default::default()
         };
 
+        // fetch current team here with appropriate code for this repository (a fake one now)
+        let actual_team = Team {
+            ..Default::default()
+        };
+
         // wait for lambda result
-        let player = lambda(PlayerUpdateLambdaArgs { actual }).await?;
+        let player = lambda(PlayerUpdateLambdaArgs {
+            actual,
+            actual_team,
+        })
+        .await?;
 
         // update player here with appropriate code for this repository
 

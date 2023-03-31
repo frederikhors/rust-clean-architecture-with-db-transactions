@@ -27,6 +27,7 @@ impl<C: RepoTrait + Send + Sync> Executor for ExecutorImpl<C> {
                     let obj = Team {
                         id: "new_id".to_string(),
                         name: input.name.to_owned(),
+                        missing_players: 11,
                     };
 
                     Ok(obj)
