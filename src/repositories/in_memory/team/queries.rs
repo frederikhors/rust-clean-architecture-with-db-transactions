@@ -24,3 +24,15 @@ impl RepoTeam for Repo {
         Ok(all)
     }
 }
+
+impl Repo {
+    pub async fn team_by_id_using_tx(_tx: String, _team_id: &str) -> Result<Team, String> {
+        // fetch Team with DB transaction here, a fake one is returned now
+
+        let team = Team {
+            ..Default::default()
+        };
+
+        Ok(team)
+    }
+}
