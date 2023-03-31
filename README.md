@@ -179,6 +179,7 @@ The (maybe) interesting code is here: https://github.com/dpc/sniper/blob/master/
 
 ```rust
 // in the repository
+
 pub struct PlayerCreate<'a> {
     tx: sqlx::Transaction<'a, sqlx::Postgres>,
     pub input: &'a PlayerInput,
@@ -248,11 +249,11 @@ let mut state_machine = self.deps.commands_repo.player_create_start(input).await
 
 But there are two big cons to this:
 
-    - a lot of code to write (also very repetitive);
+- a lot of code to write (also very repetitive);
 
-    - the same concepts must be used and repeated both in the repository layer and in the service layer or in any case the synthesis work to be done is not profitable for business logic but only for finding an intelligent way to avoid repeating code;
+- the same concepts must be used and repeated both in the repository layer and in the service layer or in any case the synthesis work to be done is not profitable for business logic but only for finding an intelligent way to avoid repeating code;
 
-    - you have to write repository methods which are very similar with the only difference that some take a db transaction as an argument and the other doesn't.
+- you have to write repository methods which are very similar with the only difference that some take a db transaction as an argument and the other doesn't.
 
 # Alternative ways
 
@@ -262,9 +263,9 @@ I found the post: https://kerkour.com/rust-web-application-clean-architecture wi
 
 I really like this code except for:
 
-    1. the service layer knows about repository implementation details (and for this reason)
+1. the service layer knows about repository implementation details (and for this reason)
 
-    1. it is impossible to change at runtime (or just to mock during tests) the DB driver.
+1. it is impossible to change at runtime (or just to mock during tests) the DB driver.
 
 I opened the issue: https://github.com/skerkour/bloom-legacy/issues/70 and I'm waiting for the author.
 
