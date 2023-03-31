@@ -13,29 +13,34 @@ pub struct Deps<C> {
     pub queries_repo: Arc<dyn queries::RepoTrait>,
 }
 
+enum Repo {
+    Memory(repositories::in_memory::Repo),
+    Postgres(repositories::postgres::Repo),
+}
+
 #[tokio::main]
 async fn main() -> Result<(), String> {
-    // let use_postgres = false;
+    let use_postgres = false;
 
     // This obviously works if alone:
-    let db_repo = Arc::new(repositories::in_memory::Repo::new());
+    // let db_repo = Arc::new(repositories::in_memory::Repo::new());
 
     // This obviously works if alone:
     // let pg_pool = Arc::new(sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres").await.unwrap());
     // let db_repo = Arc::new(repositories::postgres::Repo::new(pg_pool));
 
     // This doesn't work instead:
-    // let db_repo = if use_postgres {
-    //     let pg_pool = Arc::new(
-    //         sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
-    //             .await
-    //             .unwrap(),
-    //     );
+    let db_repo = if use_postgres {
+        let pg_pool = Arc::new(
+            sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
+                .await
+                .unwrap(),
+        );
 
-    //     Arc::new(repositories::postgres::Repo::new(pg_pool))
-    // } else {
-    //     Arc::new(repositories::in_memory::Repo::new())
-    // };
+        Arc::new(Repo::Postgres(repositories::postgres::Repo::new(pg_pool)))
+    } else {
+        Arc::new(Repo::Memory(repositories::in_memory::Repo::new()))
+    };
 
     let deps = Arc::new(Deps {
         commands_repo: db_repo.clone(),
