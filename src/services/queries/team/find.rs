@@ -1,12 +1,15 @@
 use crate::entities::team::Team;
+use crate::queries::RepoTeam;
 use crate::Deps;
 use std::sync::Arc;
 
-struct ExecutorImpl {
-    deps: Arc<Deps>,
+struct ExecutorImpl<C, Q> {
+    deps: Arc<Deps<C, Q>>,
 }
 
-pub fn new_executor(deps: Arc<Deps>) -> Box<dyn Executor> {
+pub fn new_executor<C: Send + Sync + 'static, Q: Send + Sync + RepoTeam + 'static>(
+    deps: Arc<Deps<C, Q>>,
+) -> Box<dyn Executor> {
     Box::new(ExecutorImpl { deps })
 }
 
@@ -16,7 +19,7 @@ pub trait Executor: Send + Sync {
 }
 
 #[async_trait::async_trait]
-impl Executor for ExecutorImpl {
+impl<C: Send + Sync, Q: Send + Sync + RepoTeam> Executor for ExecutorImpl<C, Q> {
     async fn execute(&self, id: &str) -> Result<Option<Team>, String> {
         let res = self.deps.queries_repo.team_by_id(id).await?;
 

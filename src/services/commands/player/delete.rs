@@ -1,12 +1,15 @@
+use crate::commands::RepoPlayer;
 use crate::entities::player::Player;
 use crate::Deps;
 use std::sync::Arc;
 
-struct ExecutorImpl {
-    deps: Arc<Deps>,
+struct ExecutorImpl<C, Q> {
+    deps: Arc<Deps<C, Q>>,
 }
 
-pub fn new_executor(deps: Arc<Deps>) -> Box<dyn Executor> {
+pub fn new_executor<C: Send + Sync + RepoPlayer + 'static, Q: Send + Sync + 'static>(
+    deps: Arc<Deps<C, Q>>,
+) -> Box<dyn Executor> {
     Box::new(ExecutorImpl { deps })
 }
 
@@ -16,7 +19,7 @@ pub trait Executor: Send + Sync {
 }
 
 #[async_trait::async_trait]
-impl Executor for ExecutorImpl {
+impl<C: Send + Sync + RepoPlayer, Q: Send + Sync> Executor for ExecutorImpl<C, Q> {
     async fn execute(&self, id: &str) -> Result<bool, String> {
         self.deps
             .commands_repo
