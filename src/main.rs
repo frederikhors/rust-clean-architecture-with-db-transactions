@@ -8,38 +8,44 @@ pub mod entities;
 pub mod repositories;
 pub mod services;
 
-pub struct Deps<C> {
-    pub commands_repo: Arc<C>,
+pub struct Deps {
+    pub commands_repo: Arc<dyn commands::RepoTrait>,
     pub queries_repo: Arc<dyn queries::RepoTrait>,
+}
+
+fn split_repo<T: commands::RepoTrait + queries::RepoTrait + 'static>(
+    arc: Arc<T>,
+) -> (Arc<dyn commands::RepoTrait>, Arc<dyn queries::RepoTrait>) {
+    (arc.clone(), arc)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
-    // let use_postgres = false;
+    let use_postgres = false;
 
     // This obviously works if alone:
-    let db_repo = Arc::new(repositories::in_memory::Repo::new());
+    // let db_repo = Arc::new(repositories::in_memory::Repo::new());
 
     // This obviously works if alone:
     // let pg_pool = Arc::new(sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres").await.unwrap());
     // let db_repo = Arc::new(repositories::postgres::Repo::new(pg_pool));
 
     // This doesn't work instead:
-    // let db_repo = if use_postgres {
-    //     let pg_pool = Arc::new(
-    //         sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
-    //             .await
-    //             .unwrap(),
-    //     );
+    let (commands_repo, queries_repo) = if use_postgres {
+        let pg_pool = Arc::new(
+            sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
+                .await
+                .unwrap(),
+        );
 
-    //     Arc::new(repositories::postgres::Repo::new(pg_pool))
-    // } else {
-    //     Arc::new(repositories::in_memory::Repo::new())
-    // };
+        split_repo(Arc::new(repositories::postgres::Repo::new(pg_pool)))
+    } else {
+        split_repo(Arc::new(repositories::in_memory::Repo::new()))
+    };
 
     let deps = Arc::new(Deps {
-        commands_repo: db_repo.clone(),
-        queries_repo: db_repo,
+        commands_repo,
+        queries_repo,
     });
 
     let app = App {
