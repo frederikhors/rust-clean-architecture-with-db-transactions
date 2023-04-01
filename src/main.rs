@@ -13,36 +13,17 @@ pub struct Deps<C> {
     pub queries_repo: Arc<dyn queries::RepoTrait>,
 }
 
-#[tokio::main]
-async fn main() -> Result<(), String> {
-    // let use_postgres = false;
-
-    // This obviously works if alone:
-    let db_repo = Arc::new(repositories::in_memory::Repo::new());
-
-    // This obviously works if alone:
-    // let pg_pool = Arc::new(sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres").await.unwrap());
-    // let db_repo = Arc::new(repositories::postgres::Repo::new(pg_pool));
-
-    // This doesn't work instead:
-    // let db_repo = if use_postgres {
-    //     let pg_pool = Arc::new(
-    //         sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
-    //             .await
-    //             .unwrap(),
-    //     );
-
-    //     Arc::new(repositories::postgres::Repo::new(pg_pool))
-    // } else {
-    //     Arc::new(repositories::in_memory::Repo::new())
-    // };
-
+fn create_app_with_repo<
+    T: queries::RepoTeam + queries::RepoPlayer + commands::RepoTeam + commands::RepoPlayer + 'static,
+>(
+    repo: Arc<T>,
+) -> App {
     let deps = Arc::new(Deps {
-        commands_repo: db_repo.clone(),
-        queries_repo: db_repo,
+        commands_repo: repo.clone(),
+        queries_repo: repo,
     });
 
-    let app = App {
+    App {
         commands: {
             services::Commands {
                 player_create: commands::player::create::new_executor(deps.clone()),
@@ -59,6 +40,23 @@ async fn main() -> Result<(), String> {
                 team_by_id: queries::team::find::new_executor(deps.clone()),
             }
         },
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), String> {
+    let use_postgres = false;
+
+    let app = if use_postgres {
+        let pg_pool = Arc::new(
+            sqlx::PgPool::connect("postgres://postgres:postgres@localhost:5432/postgres")
+                .await
+                .unwrap(),
+        );
+
+        create_app_with_repo(Arc::new(repositories::postgres::Repo::new(pg_pool)))
+    } else {
+        create_app_with_repo(Arc::new(repositories::in_memory::Repo::new()))
     };
 
     let new_player_input = PlayerInput {
