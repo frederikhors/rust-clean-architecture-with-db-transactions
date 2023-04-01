@@ -4,33 +4,50 @@ use crate::{
     services::commands::{
         self,
         player::{
-            create::PlayerCreateLambdaArgs, delete::PlayerDeleteLambdaArgs,
+            create::PlayerCreateTrait, delete::PlayerDeleteLambdaArgs,
             update::PlayerUpdateLambdaArgs, PlayerInput,
         },
         Lambda,
     },
 };
 
+pub struct PlayerCreate<'a> {
+    tx: sqlx::Transaction<'a, sqlx::Postgres>,
+    pub input: &'a PlayerInput,
+}
+
+#[async_trait::async_trait]
+impl<'a> PlayerCreateTrait for PlayerCreate<'a> {
+    async fn check_for_team_free_spaces(&mut self, team_id: &str) -> Result<bool, String> {
+        let team = self::Repo::team_by_id_using_tx(&mut self.tx, team_id).await?;
+
+        Ok(team.missing_players > 0)
+    }
+
+    async fn commit(mut self, _player: &Player) -> Result<Player, String> {
+        // update the player here
+
+        let saved_player = Player {
+            ..Default::default()
+        };
+
+        self.tx.commit().await.unwrap();
+
+        Ok(saved_player)
+    }
+}
+
 #[async_trait::async_trait]
 impl commands::RepoPlayer for Repo {
-    async fn player_create(
-        &self,
-        input: &PlayerInput,
-        lambda: &Lambda<PlayerCreateLambdaArgs, Player>,
-    ) -> Result<Player, String> {
-        println!("input: {:?} - player_create postgres repo", input);
+    type PlayerCreate<'a> = PlayerCreate<'a>;
 
-        // create a transaction here because I can use it for other repository methods calls
+    async fn player_create_start<'a>(
+        &self,
+        input: &'a PlayerInput,
+    ) -> Result<PlayerCreate<'a>, String> {
         let tx = self.pool.begin().await.unwrap();
 
-        // wait for lambda result
-        let player = lambda(PlayerCreateLambdaArgs {}).await?;
-
-        // insert player here with appropriate code for this repository
-
-        tx.commit().await.unwrap();
-
-        Ok(player)
+        Ok(PlayerCreate { tx, input })
     }
 
     async fn player_delete(

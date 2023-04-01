@@ -1,6 +1,7 @@
+use self::player::create::PlayerCreateTrait;
 use self::player::delete::PlayerDeleteLambdaArgs;
 use self::player::update::PlayerUpdateLambdaArgs;
-use self::{player::create::PlayerCreateLambdaArgs, team::create::TeamCreateLambdaArgs};
+use self::team::create::TeamCreateLambdaArgs;
 use crate::entities::player::Player;
 use crate::entities::team::Team;
 use crate::services::commands::{player::PlayerInput, team::TeamInput};
@@ -18,11 +19,12 @@ pub type Lambda<'a, ArgT, ResT> =
 
 #[async_trait::async_trait]
 pub trait RepoPlayer: Send + Sync {
-    async fn player_create<'a>(
-        &'a self,
-        input: &PlayerInput,
-        lambda: &Lambda<PlayerCreateLambdaArgs, Player>,
-    ) -> Result<Player, String>;
+    type PlayerCreate<'a>: Send + PlayerCreateTrait;
+
+    async fn player_create_start<'a>(
+        &self,
+        input: &'a PlayerInput,
+    ) -> Result<Self::PlayerCreate<'a>, String>;
 
     async fn player_delete<'a>(
         &'a self,
